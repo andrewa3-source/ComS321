@@ -1,0 +1,67 @@
+B fill
+
+fill:
+//X0 = a[]
+//X1 = n
+//X2 = i
+//X3 = i * 8
+//X4 = n - i - 1
+
+ADDI X1, X1, #100 //Set n for fill and find_index
+
+CBZ X1, end_fill //If n=0 just do nothing
+
+top_of_fill_loop:
+ADD X3, X0, X3  // a[i]
+LSL X3, X2, #3  //Shift i
+SUB X4, X1, X2  //n - i
+SUBI X4, X4, #1  // n - i - 1
+STUR X4, [X3, #0]  // store X4 in a[i]
+ADDI X2, X2, #1    // i++
+SUBS XZR, X2, X1   // set flag for i < n
+B.GE end_fill
+B top_of_fill_loop
+
+end_fill:
+ADD X2, XZR, XZR
+ADD X3, XZR, XZR
+ADD X4, XZR, XZR
+B find_index 
+
+
+find_index:
+//X0 = a[]
+//X1 = n
+//X2 = start
+//X3 = value
+//X9 = index
+//X10 = i
+//X11 = i * 8
+//X12 = value of a[i]
+
+ADDI X3, XZR, #0 // value = 5
+
+ADDI X2, XZR, #0 // Set start to 0
+ADDI X9, X2, #0 // index = start
+ADDI X10, X2, #1 // i = start + 1
+
+top_of_find_index_loop:
+SUBS XZR, X10, X1   //Set flag for i > n to end for loop
+B.GE end_find_index
+
+ADD X11, X0, X11  // a[i]
+LDUR X12, [X11, #0] //value of a[i]
+LSL X11, X10, #3    //shift i
+ADDI X10, X10, #1   // i++
+SUBS XZR, X12, X3    // Flag for a[i] < value
+B.LE find_index_increment
+SUBS XZR, X10, X1    // Flag for i < n
+B.LE  top_of_find_index_loop
+
+find_index_increment:
+ADDI X9, X9, #1
+B top_of_find_index_loop
+
+end_find_index:
+PRNT X9
+

@@ -1,0 +1,26 @@
+B swap
+
+swap:
+//X0 = a
+//X1 = b
+//X12 = tmp
+
+ADDI X1, XZR, #2
+ADDI X0, XZR, #1
+
+
+PRNT X1
+PRNT X0
+
+ADD X12, XZR, X1
+SUB X1, X1, X1
+
+ADD X1, XZR, X0
+SUB X0, X0, X0
+
+ADD X0, XZR, X12
+
+PRNT X1
+PRNT X0
+
+

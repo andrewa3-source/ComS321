@@ -1,0 +1,128 @@
+
+
+cycle_sort:
+//params that need to stay on the stack
+//X0 = a[]
+//X1 = n
+//X2 = cstart
+//X3 = val 
+//X4 = index
+
+//registers that will be used but not passed
+//X9 = n-1
+//X10 = holder for array
+//X11 = temp
+//X12 = temp
+//X13 = temp
+
+
+ADDI X2, XZR, #-1 //set cstart to zero
+
+
+//n will have preloaded value
+SUBI X9, X2, #1 //X9 = n-1
+
+
+cycle_sort_top:
+ADDI X2, X2, #1  //cstart++
+SUBS X13, X2, X5  // X13 = cstart - (n-1), checks to see if for loop is done
+CBZ X13, finished_cycle
+
+
+
+LSL X10, X2, #3 //convert index to offset
+ADD X10, X0, X10 //$a[cstart]
+LDUR X3, [X10, #0] //value equals a[cstart]
+
+
+//need to get index(X4) from find_index
+//send the array:X0, n:X1, cstart:X2, val:X3
+SUBI SP, SP, #40 //Make space on stack
+STUR X0, [SP, #0]
+STUR X1, [SP, #8]
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+STUR X4, [SP, #32]
+
+BL find_index
+
+ADD X4, X0, XZR
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #16] // Restore X2
+LDUR X3, [SP, #24] // Restore X3
+ADDI SP, SP, #40  //remove space on Stack
+
+SUBS X10, X4, X2
+CBZ X10, cycle_sort_top
+
+
+//need to get index(X4) from skip_duplicates
+//send a:X0, index: X4, val: X3
+SUBI SP, SP, #40 //Make space on stack
+STUR X0, [SP, #0]
+STUR X1, [SP, #8]
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+STUR X4, [SP, #32]
+
+ADD X1, X4, XZR //set X1 to start(index) for this call
+ADD X2, X3, XZR //set X2 to value for this call
+
+BL skip_duplicates
+
+ADD X4, X3, XZR //index = return value from skip_dup
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #16] // Restore X2
+LDUR X3, [SP, #24] // Restore X3
+ADDI SP, SP, #40  //remove space on Stack
+
+
+//swap val and a[index]
+LSL X12, X4, #3
+ADD X12, X0, X12
+
+ADD X11, XZR, X3 //Add val to temp reg X11
+SUB X3, X3, X3 //remove value from val
+
+LDUR X3, [X12, #0] //load value of a[index] into val(X3)
+
+STUR X11, [X12, #0] //store X7 in array at offset of index
+
+SUB X11, X11, X11 //Remove values from temp reg X7
+SUB X12, X12, X12 //Remove values from temp reg X8
+
+
+//complete_cycle
+//send a: X0, n: X1, cstart: X2, index: X4, val: X3
+SUBI SP, SP, #40 //Make space on stack
+STUR X0, [SP, #0]
+STUR X1, [SP, #8]
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+STUR X4, [SP, #32]
+
+//swap values of X3 and X4 for function call
+ADD X11, X3, XZR
+SUB X3, X3, X3
+ADD X3, X4, XZR
+SUB X4, X4, X4
+ADD X4, X11, XZR
+
+BL complete_cycle
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #16] // Restore X2
+LDUR X3, [SP, #24] // Restore X3
+LDUR X4, [SP, #32]
+ADDI SP, SP, #40  //remove space on Stack
+
+B cycle_sort_top
+
+
+finished_cycle:
+//DUMP

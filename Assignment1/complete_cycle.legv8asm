@@ -1,0 +1,59 @@
+complete_cycle:
+//X0 = a[]
+//X1 = n
+//X2 = start
+//X3 = index
+//X4 = value
+//X9 = index - start
+//X10 = a[]
+//X11 = a[index]
+
+SUB X9, X3, X2
+CBZ X9, end_complete_cycle
+
+SUBI SP, SP, # //Make space on stack
+
+STUR X0, [SP, #0]
+STUR X1, [SP, #8]
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+STUR X4, [SP, #32]
+
+ADD X3, X4, XZR // Set X3 = value for find_index
+
+BL find_index
+
+ADD X3, X0, XZR // Set index = X3 to get return value from find_index 
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #24] // Restore X2
+LDUR X4, [SP, #32] // Restore X4
+
+ADDI X1, X3, #0  //Set X1 to index
+ADDI X2, X4, #0  //Set X2 to value
+
+BL skip_duplicates
+
+ADD X3, X0, XZR // Set index = X3 to get return value from find_index 
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #24] // Restore X2
+LDUR X4, [SP, #32] // Restore X4
+
+ADDI X10, X0, #0  // a[]
+LDUR X11, [X10, #0] //value of a[index]
+LSL X11, X3, #3 //shift index
+
+ADDI X1, X11, #0 //move a[index] to be parameter X1
+
+ADDI X0, X4, #0 //move value to be parameter X0
+BL swap
+
+//TODO reassign the values after the swap
+
+B complete_cycle
+
+end_complete_cycle:
+BR LR

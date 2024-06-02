@@ -1,0 +1,16 @@
+Andrew Ahrenkiel - netID: andrewa3
+Drew Kinneer - netID: dkinneer
+
+Notes About program:
+First Run: "sh build.sh" to compile the java program
+Next Run: "sh run.sh <machine code file to use>" to run the program on the given file
+
+Output is 100% complete and will run in the emulator
+
+Note! - The only gripe with this program is with immediate values. The machine code can only handle immediate values in the range -2047 to 2047 per the 12-bit signed ALU_immediate of the I-instruction format.
+
+If you have any questions or concerns, please feel free to email either of us at:
+andrewa3@iastate.edu
+dkinneer@iastate.edu
+
+Thank you!

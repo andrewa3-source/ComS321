@@ -1,0 +1,23 @@
+fill:
+//X0 = a[]
+//X1 = n
+//X9 = i
+//X10 = i * 8
+//X11 = n - i - 1
+
+
+CBZ X1, end_fill //If n=0 just do nothing
+
+top_of_fill_loop:
+ADD X10, X0, X10  // a[i]
+LSL X10, X9, #3  //Shift i
+SUB X11, X1, X9  //n - i
+SUBI X11, X11, #1  // n - i - 1
+STUR X11, [X10, #0]  // store X11 in a[i]
+ADDI X9, X9, #1    // i++
+SUBS XZR, X9, X1   // set flag for i < n
+B.GE end_fill
+B top_of_fill_loop
+
+end_fill:
+DUMP 

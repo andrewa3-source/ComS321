@@ -1,0 +1,399 @@
+//Andrew Ahrekiel and Drew Kinneer
+//NETIDs: andrewa3 and dkinneer
+
+B main
+
+
+swap:
+//X0 = a
+//X1 = b
+//X9 = tmp
+//X10 = tmp
+
+LDUR X9, [X1, #0] //value of b
+ADD X10, X0, XZR
+ADD X0, X9, XZR
+STUR X10, [X1, #0]
+BR LR
+
+
+find_index:
+//X0 = a[]
+//X1 = n
+//X2 = start
+//X3 = value
+//X9 = index
+//X10 = i
+//X11 = i * 8
+//X12 = value of a[i]
+ADDI X2, XZR, #0 // Set start to 0
+ADDI X9, X2, #0 // index = start
+ADDI X10, X2, #1 // i = start + 1
+
+top_of_find_index_loop:
+SUBS XZR, X10, X1   //Set flag for i > n to end for loop
+B.GE end_find_index
+
+ADD X11, X0, X11  // a[i]
+LDUR X12, [X11, #0] //value of a[i]
+LSL X11, X10, #3    //shift i
+ADDI X10, X10, #1   // i++
+SUBS XZR, X12, X3    // Flag for a[i] < value
+B.LE find_index_increment
+SUBS XZR, X10, X1    // Flag for i < n
+B.LE  top_of_find_index_loop
+
+find_index_increment:
+ADDI X9, X9, #1
+B top_of_find_index_loop
+
+end_find_index:
+ADDI X0, X9, #0
+BR LR
+
+
+skip_duplicates:
+//X0 = a[]
+//X1 = start
+//X2 = value
+//X10 = index
+
+ADD X10, XZR, X1 // index = start
+ADD X13, XZR, X2 // X13 = value
+
+top_of_skip_dup:
+LSL X11, X10, #3 //convert index to offset
+ADD X11, X0, X11 //$a[index]
+LDUR X12, [X11, #0] //X12 = a[index]
+
+SUBS X14, X13, X12  //value - a[index]
+CBNZ X14, found_index //if not equal, then branch to found index
+
+ADDI X10, X10, #1 //index++
+B top_of_skip_dup
+
+found_index:
+ADD X0, X10, XZR
+BR LR
+
+
+complete_cycle:
+//X0 = a[]
+//X1 = n
+//X2 = start
+//X3 = index
+//X4 = value
+//X9 = index - start
+//X10 = a[]
+//X11 = a[index]
+
+SUBI SP, SP, #48 //Make space on stack
+
+STUR X0, [SP, #0]
+STUR X1, [SP, #8]
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+STUR X4, [SP, #32]
+STUR LR, [SP, #40]
+
+top_complete_cycle_loop:
+SUB X9, X3, X2
+CBZ X9, end_complete_cycle
+
+ADD X3, X4, XZR
+
+BL find_index
+
+ADD X3, X0, XZR // Set index = X3 to get return value from find_index 
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #16] // Restore X2
+LDUR X4, [SP, #32] // Restore X4
+
+STUR X3, [SP, #24]
+
+ADDI X1, X3, #0  //Set X1 to index
+ADDI X2, X4, #0  //Set X2 to value
+
+BL skip_duplicates
+
+ADD X3, X0, XZR // Set index = X3 to get return value from skip_duplicates
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #16] // Restore X2
+LDUR X4, [SP, #32] // Restore X4
+
+STUR X3, [SP, #24]
+
+//swap val and a[index]
+LSL X10, X3, #3 //shift index
+ADD X10, X0, X10  // a[]
+LDUR X11, [X10, #0] //value of a[index]
+ADD X12, X4, XZR 
+ADD X4, X11, XZR
+STUR X12, [X10, #0] 
+
+SUB X11, X11, X11
+
+STUR X0, [SP, #0]
+STUR X1, [SP, #8]
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+STUR X4, [SP, #32]
+
+B top_complete_cycle_loop
+
+end_complete_cycle:
+//PRNT X2
+LDUR LR, [SP, #40] // Restore LR
+ADDI SP, SP, #48
+BR LR
+
+
+cycle_sort:
+//params that need to stay on the stack
+//X0 = a[]
+//X1 = n
+//X2 = cstart
+//X3 = val 
+//X4 = index
+
+//registers that will be used but not passed
+//X9 = n-1
+//X10 = holder for array
+//X11 = temp
+//X12 = temp
+//X13 = temp
+
+ADDI X2, XZR, #-1 //set cstart to zero
+
+//n will have preloaded value
+
+SUBI SP, SP, #48 //Make space on stack
+
+STUR X0, [SP, #0]
+STUR X1, [SP, #8]
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+STUR X4, [SP, #32]
+STUR LR, [SP, #40]
+
+cycle_sort_top:
+ADDI X2, X2, #1  //cstart++
+SUBI X9, X1, #1
+SUBS XZR, X2, X9  // X13 = cstart - (n-1), checks to see if for loop is done
+B.GE finished_cycle
+
+LSL X10, X2, #3 //convert index to offset
+ADD X10, X0, X10 //$a[cstart]
+LDUR X3, [X10, #0] //value equals a[cstart]
+
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+
+BL find_index
+
+ADD X4, X0, XZR
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #16] // Restore X2
+LDUR X3, [SP, #24] // Restore X3
+
+SUB X10, X4, X2
+CBZ X10, cycle_sort_top
+
+//need to get index(X4) from skip_duplicates
+//send a:X0, index: X4, val: X3
+STUR X0, [SP, #0]
+STUR X1, [SP, #8]
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+STUR X4, [SP, #32]
+
+ADD X1, X4, XZR //set X1 to start(index) for this call
+ADD X2, X3, XZR //set X2 to value for this call
+
+BL skip_duplicates
+
+ADD X4, X3, XZR //index = return value from skip_dup
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #16] // Restore X2
+LDUR X3, [SP, #24] // Restore X3
+
+//swap val and a[index]
+LSL X12, X4, #3
+ADD X12, X0, X12
+
+ADD X11, X3, XZR //Add val to temp reg X11
+
+LDUR X3, [X12, #0] //load value of a[index] into val(X3)
+
+STUR X11, [X12, #0] //store X11 in array at offset of index
+
+//complete_cycle
+//send a: X0, n: X1, cstart: X2, index: X4, val: X3
+
+STUR X0, [SP, #0]
+STUR X1, [SP, #8]
+STUR X2, [SP, #16]
+STUR X3, [SP, #24]
+STUR X4, [SP, #32]
+
+//swap values of X3 and X4 for function call
+ADD X11, X3, XZR
+ADD X3, X4, XZR
+ADD X4, X11, XZR
+
+BL complete_cycle
+
+LDUR X0, [SP, #0] // Restore X0
+LDUR X1, [SP, #8] // Restore X1
+LDUR X2, [SP, #16] // Restore X2
+LDUR X3, [SP, #24] // Restore X3
+LDUR X4, [SP, #32]
+
+B cycle_sort_top
+
+finished_cycle:
+LDUR LR, [SP, #40]
+ADDI SP, SP, #48  //remove space on Stack
+BR LR
+
+
+fill:
+//X0 = a[]
+//X1 = n
+//X9 = i
+//X10 = i * 8
+//X11 = n - i - 1
+
+CBZ X1, end_fill //If n=0 just do nothing
+
+top_of_fill_loop:
+LSL X10, X9, #3  //Shift i
+ADD X10, X0, X10  // a[i]
+SUB X11, X1, X9  //n - i
+SUBI X11, X11, #1  // n - i - 1
+STUR X11, [X10, #0]  // store X11 in a[i]
+//PRNT X11
+ADDI X9, X9, #1    // i++
+SUBS XZR, X9, X1   // set flag for i < n
+B.GE end_fill
+B top_of_fill_loop
+
+end_fill:
+BR LR
+
+
+binary_search:
+//X0 = a*
+//X1 = start
+//X2 = end
+//X3 = value
+//X9 = index
+//X10 = start + end
+//X11 = a[index]
+//X12 = a[index] - value | Should be 0 if equvivilent 
+
+SUBS XZR, X2, X1   //if end < start
+B.LT return_failure 
+
+ADD X10, X1, X2    //start + end
+
+LSR X9, X10, #1    //Divide by 2 by shifting right once
+
+ADD X11, X0, X9  // a[index]
+
+SUB X12, X11, X3     // a[index] - value
+CBZ X12, return_binary_search   // a[index] - value = 0 meaning they are equivilent and index is found
+
+SUBS XZR, X11, X3   // a[index] > value
+B.GT minus_one
+
+B plus_one
+
+minus_one:
+SUBI X2, X9, #1    //end = index - 1
+B binary_search
+
+plus_one:
+ADDI X1, X9, #1    //start = index + 1
+B binary_search
+
+return_failure:
+ADDI X0, XZR, #-1
+BR LR 
+
+return_binary_search:
+ADDI X0, X9, #0
+BR LR
+
+
+main:
+ADDI X1, XZR, #10000 //n = 10000
+
+SUBI SP, SP, #8 
+STUR X1, [SP, #0] //Save n to stack
+
+BL fill
+
+LDUR X1, [SP, #0]
+ADDI SP, SP, #8
+
+SUBI SP, SP, #16 
+STUR X0, [SP, #0] //Save a[] to stack
+STUR X1, [SP, #8] //Save n to stack
+
+BL cycle_sort
+
+LDUR X0, [SP, #0]
+LDUR X1, [SP, #8]
+
+STUR X0, [SP, #0] //Save a[] to stack
+STUR X1, [SP, #8] //Save n to stack
+
+ADDI X2, X1, #-1 //X2 = N - 1 
+ADDI X1, XZR, #0 // X1 = 0
+ADDI X3, XZR, #0 // X3 = 0
+
+BL binary_search
+
+PRNT X0
+
+LDUR X0, [SP, #0]
+LDUR X1, [SP, #8]
+
+ADDI X2, X1, #-1 //X2 = N - 1 
+ADDI X3, X1, #-1 // X3 = N - 1 
+ADDI X1, XZR, #0 // X1 = 0
+
+BL binary_search
+
+PRNT X0
+
+LDUR X0, [SP, #0]
+LDUR X1, [SP, #8]
+
+ADDI X2, X1, #-1 //X2 = N - 1 
+LSR X3, X1, #1 // X3 = N - 1 
+ADDI X1, XZR, #0 // X1 = 0
+
+BL binary_search
+
+PRNT X0
+
+LDUR X0, [SP, #0]
+LDUR X1, [SP, #8]
+
+ADDI X2, X1, #-1 //X2 = N - 1 
+ADDI X3, X1, #0 // X3 = N
+ADDI X1, XZR, #0 // X1 = 0
+
+BL binary_search
+
+PRNT X0

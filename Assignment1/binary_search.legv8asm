@@ -1,0 +1,41 @@
+binary_search:
+//X0 = a*
+//X1 = start
+//X2 = end
+//X3 = value
+//X9 = index
+//X10 = start + end
+//X11 = a[index]
+//X12 = a[index] - value | Should be 0 if equvivilent 
+
+SUBS XZR, X2, X1   //if end < start
+B.LT return_failure 
+
+ADD X10, X1, X2    //start + end
+
+LSR X9, X10, #1    //Divide by 2 by shifting right once
+
+ADD X11, X0, X9  // a[index]
+
+SUB X12, X11, X3     // a[index] - value
+CBZ X12, return_binary_search   // a[index] - value = 0 meaning they are equivilent and index is found
+
+SUBS XZR, X11, X3   // a[index] > value
+B.GT minus_one
+
+B plus_one
+
+minus_one:
+SUBI X2, X9, #1    //end = index - 1
+B binary_search
+
+plus_one:
+ADDI X1, X9, #1    //start = index + 1
+B binary_search
+
+return_failure:
+ADDI X0, XZR, #-1 
+
+return_binary_search:
+PRNT X9
+ADDI X0, X9, #0
